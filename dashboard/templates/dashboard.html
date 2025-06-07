@@ -99,10 +99,11 @@
                 </h5>
             </div>
             <div class="card-body">
-                <form id="projectForm" novalidate>
+                <form id="projectForm" method="POST" action="{% url 'dashboard:index' %}" novalidate>
+                    {% csrf_token %}
                     <div class="mb-3">
-                        <label for="projectName" class="form-label fw-semibold">Nombre del Proyecto</label>
-                        <input type="text" class="form-control" id="projectName" 
+                        <label for="project_name" class="form-label fw-semibold">Nombre del Proyecto</label>
+                        <input type="text" class="form-control" id="project_name" name="project_name" 
                                placeholder="Ingrese el nombre del proyecto" required>
                         <div class="invalid-feedback">
                             Por favor ingrese el nombre del proyecto.
@@ -110,8 +111,8 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="projectDescription" class="form-label fw-semibold">Descripción</label>
-                        <textarea class="form-control" id="projectDescription" rows="3" 
+                        <label for="project_description" class="form-label fw-semibold">Descripción</label>
+                        <textarea class="form-control" id="project_description" name="project_description" rows="3" 
                                   placeholder="Describa los detalles del proyecto" required></textarea>
                         <div class="invalid-feedback">
                             Por favor ingrese una descripción.
@@ -119,8 +120,8 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="provider" class="form-label fw-semibold">Proveedor</label>
-                        <select class="form-select" id="provider" required>
+                        <label for="project_provider" class="form-label fw-semibold">Proveedor</label>
+                        <select class="form-select" id="project_provider" name="project_provider" required>
                             <option value="">Seleccione un proveedor...</option>
                             <option value="TechSolutions SA">TechSolutions SA</option>
                             <option value="InfraCorp Ltd">InfraCorp Ltd</option>
@@ -133,10 +134,10 @@
                     </div>
                     
                     <div class="mb-4">
-                        <label for="projectCost" class="form-label fw-semibold">Costo del Proyecto ($)</label>
+                        <label for="project_cost" class="form-label fw-semibold">Costo del Proyecto ($)</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="projectCost" 
+                            <input type="number" class="form-control" id="project_cost" name="project_cost" 
                                    placeholder="0.00" step="0.01" min="0" required>
                         </div>
                         <div class="invalid-feedback">
@@ -151,6 +152,9 @@
                     <div class="d-grid gap-2">
                         <button type="button" class="btn btn-primary btn-lg" onclick="evaluateProject()">
                             <i class="fas fa-calculator me-2"></i>Evaluar Proyecto
+                        </button>
+                        <button type="submit" class="btn btn-success btn-lg" id="submitProject" style="display: none;">
+                            <i class="fas fa-save me-2"></i>Guardar y Continuar
                         </button>
                         <button type="button" class="btn btn-outline-secondary" onclick="clearForm()">
                             <i class="fas fa-times me-2"></i>Limpiar Formulario
@@ -396,6 +400,9 @@
             input.classList.remove('is-valid', 'is-invalid');
         });
         
+        // Ocultar el botón de guardar
+        document.getElementById('submitProject').style.display = 'none';
+        
         // Reset evaluation result
         document.getElementById('evaluationResult').innerHTML = `
             <div class="text-center py-5">
@@ -415,15 +422,18 @@
             return;
         }
 
-        const cost = parseFloat(document.getElementById('projectCost').value);
-        const projectName = document.getElementById('projectName').value.trim();
-        const provider = document.getElementById('provider').value;
-        const description = document.getElementById('projectDescription').value.trim();
+        const cost = parseFloat(document.getElementById('project_cost').value);
+        const projectName = document.getElementById('project_name').value.trim();
+        const provider = document.getElementById('project_provider').value;
+        const description = document.getElementById('project_description').value.trim();
         
         if (isNaN(cost) || cost <= 0) {
             showToast('Por favor ingrese un costo válido', 'error');
             return;
         }
+        
+        // Mostrar el botón de guardar después de la evaluación
+        document.getElementById('submitProject').style.display = 'block';
 
         let resultHtml = '';
         
@@ -549,8 +559,8 @@
             showToast('Complete todos los campos antes de guardar', 'warning');
             return;
         }
-        showToast('Proyecto guardado como borrador', 'success');
-        // Implementar guardado de borrador
+        // Enviar el formulario directamente
+        document.getElementById('projectForm').submit();
     }
 
     // Quick access functions
@@ -594,7 +604,7 @@
         });
 
         // Format currency input
-        const costInput = document.getElementById('projectCost');
+        const costInput = document.getElementById('project_cost');
         costInput.addEventListener('input', function() {
             const value = parseFloat(this.value);
             if (!isNaN(value) && value >= CONFIG.LIMITE_CONTRATO) {
